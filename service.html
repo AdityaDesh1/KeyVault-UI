@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Page</title>
+</head>
+
+<body>
+    <h2>Upload File (Logged-in Users Only)</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="file" required />
+        <button type="submit">Upload</button>
+    </form>
+
+    <!-- Result area for displaying the unique key and upload message -->
+    <div id="uploadResult" style="margin-top: 20px;"></div>
+
+    <h2>Download File</h2>
+    <form id="downloadForm">
+        <input type="text" id="filekey" placeholder="Enter unique key" required />
+        <button type="submit">Download</button>
+    </form>
+
+    <script>
+        // Upload file only for logged-in users
+        document.getElementById("uploadForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+
+            fetch("http://localhost:3000/upload", {
+                method: "POST",
+                credentials: "include", // Include session cookies
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Display the result message and unique key
+                    if (data.uniqueKey) {
+                        document.getElementById("uploadResult").innerHTML = `
+                        <p>${data.message}</p>
+                        <p><strong>Unique Key:</strong> ${data.uniqueKey}</p>
+                        <button onclick="copyToClipboard('${data.uniqueKey}')">Copy Unique Key</button>
+                    `;
+                    } else {
+                        document.getElementById("uploadResult").innerText = data.message;
+                    }
+                })
+                .catch(error => console.error("Error during upload:", error));
+        });
+
+        // Download file using unique key
+        document.getElementById("downloadForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+            const filekey = document.getElementById("filekey").value;
+            window.location.href = `http://localhost:3000/download/${filekey}`;
+        });
+
+        // Function to copy the unique key to the clipboard
+        function copyToClipboard(key) {
+            navigator.clipboard.writeText(key).then(() => {
+                alert("Unique Key copied to clipboard!");
+            });
+        }
+    </script>
+</body>
+
+</html>
